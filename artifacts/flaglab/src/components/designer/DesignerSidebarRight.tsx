@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import type { Play, PlayerToken, RouteSegment } from "@/hooks/use-designer-state";
 import { Trash2, X, Plus, Route, Pencil } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSettings } from "@/lib/settings";
 
 const ROLE_COLORS: Record<string, string> = {
@@ -67,6 +67,12 @@ export function DesignerSidebarRight({
 }: DesignerSidebarRightProps) {
   const { settings } = useSettings();
   const [tagInput, setTagInput] = useState("");
+  const [titleValue, setTitleValue] = useState(play.title ?? "");
+
+  // Keep local title in sync when play changes externally (load, undo/redo)
+  useEffect(() => {
+    setTitleValue(play.title ?? "");
+  }, [play.title]);
 
   const currentTags: string[] = Array.isArray(play.tags) ? (play.tags as string[]) : [];
 
@@ -244,8 +250,11 @@ export function DesignerSidebarRight({
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground">Title</Label>
                 <Input
-                  value={play.title}
-                  onChange={(e) => onUpdatePlay({ title: e.target.value })}
+                  value={titleValue}
+                  onChange={(e) => {
+                    setTitleValue(e.target.value);
+                    onUpdatePlay({ title: e.target.value });
+                  }}
                   placeholder="e.g. Smash Right"
                 />
               </div>
