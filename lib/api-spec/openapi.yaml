@@ -1,0 +1,852 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: FlagLab API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: plays
+    description: Play operations
+  - name: playbooks
+    description: Playbook operations
+  - name: formations
+    description: Formation operations
+  - name: suggested-plays
+    description: Suggested plays operations
+  - name: dashboard
+    description: Dashboard summary operations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /plays:
+    get:
+      operationId: listPlays
+      tags: [plays]
+      summary: List all plays
+      parameters:
+        - name: playbook_id
+          in: query
+          schema:
+            type: string
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [5v5, 7v7]
+        - name: mode
+          in: query
+          schema:
+            type: string
+            enum: [offense, defense]
+        - name: field_zone
+          in: query
+          schema:
+            type: string
+            enum: [red_zone, midfield, backed_up]
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: tag
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of plays
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Play"
+    post:
+      operationId: createPlay
+      tags: [plays]
+      summary: Create a play
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePlayBody"
+      responses:
+        "201":
+          description: Created play
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Play"
+
+  /plays/{id}:
+    get:
+      operationId: getPlay
+      tags: [plays]
+      summary: Get a play by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Play found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Play"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updatePlay
+      tags: [plays]
+      summary: Update a play
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePlayBody"
+      responses:
+        "200":
+          description: Updated play
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Play"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deletePlay
+      tags: [plays]
+      summary: Delete a play
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+
+  /plays/{id}/duplicate:
+    post:
+      operationId: duplicatePlay
+      tags: [plays]
+      summary: Duplicate a play
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "201":
+          description: Duplicated play
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Play"
+
+  /playbooks:
+    get:
+      operationId: listPlaybooks
+      tags: [playbooks]
+      summary: List all playbooks
+      responses:
+        "200":
+          description: List of playbooks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Playbook"
+    post:
+      operationId: createPlaybook
+      tags: [playbooks]
+      summary: Create a playbook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePlaybookBody"
+      responses:
+        "201":
+          description: Created playbook
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Playbook"
+
+  /playbooks/{id}:
+    get:
+      operationId: getPlaybook
+      tags: [playbooks]
+      summary: Get a playbook
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Playbook found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Playbook"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updatePlaybook
+      tags: [playbooks]
+      summary: Update a playbook
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePlaybookBody"
+      responses:
+        "200":
+          description: Updated playbook
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Playbook"
+    delete:
+      operationId: deletePlaybook
+      tags: [playbooks]
+      summary: Delete a playbook
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+
+  /formations:
+    get:
+      operationId: listFormations
+      tags: [formations]
+      summary: List all formations
+      parameters:
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [5v5, 7v7]
+        - name: mode
+          in: query
+          schema:
+            type: string
+            enum: [offense, defense]
+      responses:
+        "200":
+          description: List of formations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Formation"
+
+  /suggested-plays:
+    get:
+      operationId: listSuggestedPlays
+      tags: [suggested-plays]
+      summary: List suggested plays catalog
+      parameters:
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [5v5, 7v7]
+        - name: coverage
+          in: query
+          schema:
+            type: string
+        - name: concept
+          in: query
+          schema:
+            type: string
+        - name: field_zone
+          in: query
+          schema:
+            type: string
+        - name: tag
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of suggested plays
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SuggestedPlay"
+
+  /suggested-plays/{id}/load:
+    post:
+      operationId: loadSuggestedPlay
+      tags: [suggested-plays]
+      summary: Load a suggested play into the user's library
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "201":
+          description: Play created from suggested play
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Play"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get dashboard summary stats
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /dashboard/recent-plays:
+    get:
+      operationId: getRecentPlays
+      tags: [dashboard]
+      summary: Get recently modified plays
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 5
+      responses:
+        "200":
+          description: Recent plays
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Play"
+
+  /dashboard/plays-by-formation:
+    get:
+      operationId: getPlaysByFormation
+      tags: [dashboard]
+      summary: Get play counts grouped by formation
+      responses:
+        "200":
+          description: Plays by formation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FormationCount"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+      required:
+        - error
+        - message
+
+    PlayerToken:
+      type: object
+      properties:
+        id:
+          type: string
+        role:
+          type: string
+          description: "QB, WR1, WR2, WR3, RB, C, DB, Rusher, Safety, LB, etc."
+        label:
+          type: string
+        x:
+          type: number
+        y:
+          type: number
+        color:
+          type: string
+        team:
+          type: string
+          enum: [offense, defense]
+      required:
+        - id
+        - role
+        - label
+        - x
+        - y
+        - team
+
+    RoutePoint:
+      type: object
+      properties:
+        x:
+          type: number
+        y:
+          type: number
+      required:
+        - x
+        - y
+
+    RouteSegment:
+      type: object
+      properties:
+        id:
+          type: string
+        playerId:
+          type: string
+        type:
+          type: string
+          enum: [straight, slant, out, in, post, corner, go, comeback, hitch, drag, wheel, motion, handoff, zone_drop, screen]
+        points:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoutePoint"
+        style:
+          type: string
+          enum: [solid, dashed, dotted]
+        color:
+          type: string
+      required:
+        - id
+        - playerId
+        - type
+        - points
+        - style
+
+    Play:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        mode:
+          type: string
+          enum: [offense, defense]
+        format:
+          type: string
+          enum: [5v5, 7v7]
+        formationId:
+          type: string
+        playbookId:
+          type: string
+        players:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlayerToken"
+        routes:
+          type: array
+          items:
+            $ref: "#/components/schemas/RouteSegment"
+        notes:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        suggestedUse:
+          type: string
+        coverageTargets:
+          type: array
+          items:
+            type: string
+        fieldZone:
+          type: string
+          enum: [red_zone, midfield, backed_up]
+        difficulty:
+          type: string
+          enum: [beginner, intermediate, advanced]
+        primaryConcept:
+          type: string
+        isManBeater:
+          type: boolean
+        isZoneBeater:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - mode
+        - format
+        - players
+        - routes
+        - tags
+        - coverageTargets
+        - createdAt
+        - updatedAt
+
+    CreatePlayBody:
+      type: object
+      properties:
+        title:
+          type: string
+        mode:
+          type: string
+          enum: [offense, defense]
+        format:
+          type: string
+          enum: [5v5, 7v7]
+        formationId:
+          type: string
+        playbookId:
+          type: string
+        players:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlayerToken"
+        routes:
+          type: array
+          items:
+            $ref: "#/components/schemas/RouteSegment"
+        notes:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        suggestedUse:
+          type: string
+        coverageTargets:
+          type: array
+          items:
+            type: string
+        fieldZone:
+          type: string
+          enum: [red_zone, midfield, backed_up]
+        difficulty:
+          type: string
+          enum: [beginner, intermediate, advanced]
+        primaryConcept:
+          type: string
+        isManBeater:
+          type: boolean
+        isZoneBeater:
+          type: boolean
+      required:
+        - title
+        - mode
+        - format
+
+    UpdatePlayBody:
+      type: object
+      properties:
+        title:
+          type: string
+        mode:
+          type: string
+          enum: [offense, defense]
+        format:
+          type: string
+          enum: [5v5, 7v7]
+        formationId:
+          type: string
+        playbookId:
+          type: string
+        players:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlayerToken"
+        routes:
+          type: array
+          items:
+            $ref: "#/components/schemas/RouteSegment"
+        notes:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        suggestedUse:
+          type: string
+        coverageTargets:
+          type: array
+          items:
+            type: string
+        fieldZone:
+          type: string
+          enum: [red_zone, midfield, backed_up]
+        difficulty:
+          type: string
+          enum: [beginner, intermediate, advanced]
+        primaryConcept:
+          type: string
+        isManBeater:
+          type: boolean
+        isZoneBeater:
+          type: boolean
+
+    Playbook:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        format:
+          type: string
+          enum: [5v5, 7v7, both]
+        color:
+          type: string
+        playCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - format
+        - playCount
+        - createdAt
+        - updatedAt
+
+    CreatePlaybookBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        format:
+          type: string
+          enum: [5v5, 7v7, both]
+        color:
+          type: string
+      required:
+        - name
+        - format
+
+    UpdatePlaybookBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        format:
+          type: string
+          enum: [5v5, 7v7, both]
+        color:
+          type: string
+
+    Formation:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        format:
+          type: string
+          enum: [5v5, 7v7]
+        mode:
+          type: string
+          enum: [offense, defense]
+        description:
+          type: string
+        players:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlayerToken"
+      required:
+        - id
+        - name
+        - format
+        - mode
+        - players
+
+    SuggestedPlay:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        coachingPurpose:
+          type: string
+        idealSituation:
+          type: string
+        format:
+          type: string
+          enum: [5v5, 7v7]
+        mode:
+          type: string
+          enum: [offense, defense]
+        tags:
+          type: array
+          items:
+            type: string
+        coverageAttacked:
+          type: string
+        primaryConcept:
+          type: string
+        difficulty:
+          type: string
+          enum: [beginner, intermediate, advanced]
+        fieldZone:
+          type: string
+          enum: [red_zone, midfield, backed_up, any]
+        isManBeater:
+          type: boolean
+        isZoneBeater:
+          type: boolean
+        players:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlayerToken"
+        routes:
+          type: array
+          items:
+            $ref: "#/components/schemas/RouteSegment"
+        formationId:
+          type: string
+      required:
+        - id
+        - name
+        - coachingPurpose
+        - idealSituation
+        - format
+        - mode
+        - tags
+        - players
+        - routes
+
+    DashboardSummary:
+      type: object
+      properties:
+        totalPlays:
+          type: integer
+        totalPlaybooks:
+          type: integer
+        offensivePlays:
+          type: integer
+        defensivePlays:
+          type: integer
+        playsBy5v5:
+          type: integer
+        playsBy7v7:
+          type: integer
+        redZonePlays:
+          type: integer
+        recentActivity:
+          type: integer
+          description: Plays modified in last 7 days
+      required:
+        - totalPlays
+        - totalPlaybooks
+        - offensivePlays
+        - defensivePlays
+        - playsBy5v5
+        - playsBy7v7
+        - redZonePlays
+        - recentActivity
+
+    FormationCount:
+      type: object
+      properties:
+        formationId:
+          type: string
+        formationName:
+          type: string
+        count:
+          type: integer
+      required:
+        - formationId
+        - formationName
+        - count

@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "FlagLab"
+version = "1.0.0"
+id = "artifacts/flaglab"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19619
+
+[services.development]
+run = "pnpm --filter @workspace/flaglab run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/flaglab", "run", "build" ]
+publicDir = "artifacts/flaglab/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19619"
+BASE_PATH = "/"

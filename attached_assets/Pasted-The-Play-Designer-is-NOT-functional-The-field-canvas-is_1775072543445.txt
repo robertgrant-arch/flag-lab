@@ -1,0 +1,21 @@
+The Play Designer is NOT functional. The field canvas is broken — I can see the green field but the core play design features don't work properly. Here's what needs to be FIXED and made fully working:
+
+## Critical Fixes Needed:
+
+1. **Drag players from Roster onto the field** — When I drag a player (QB, WR1, WR2, etc.) from the Roster panel onto the field canvas, that player should appear as a positioned circle/icon on the field at the drop location. Currently it seems broken or not working.
+
+2. **Move/reposition players on the field** — After placing a player on the field, I should be able to click and drag them to reposition them anywhere on the field.
+
+3. **Draw routes** — After placing a player, I need to be able to click on a player and then draw their route by clicking waypoints on the field. The route should render as a line with an arrow at the end showing direction. Support the different route line styles (solid, dashed, wavy) that were added.
+
+4. **Delete routes and players** — Right-click or select + delete key to remove a player from the field or clear their route.
+
+5. **Formation Templates should work** — When I select a Formation Template (Trips Right, Spread, Shotgun, etc.), it should IMMEDIATELY place all offensive players on the field in that formation's positions.
+
+6. **Save play should persist everything** — When I click Save, ALL player positions, routes, route styles, colors, and annotations should be saved to the database and load back when I reopen the play.
+
+7. **Visual feedback** — Selected player should have a highlight/glow. Drawing mode should show a cursor change. Players on the field should show their position label (QB, WR1, etc.).
+
+8. **Both offense and defense** — I need to be able to place both offensive AND defensive players on the field.
+
+Please test this thoroughly by actually dragging players, drawing routes, and saving. The Designer is the CORE feature of this app — it must work flawlessly. Debug the canvas interactions, event handlers, and state management carefully.

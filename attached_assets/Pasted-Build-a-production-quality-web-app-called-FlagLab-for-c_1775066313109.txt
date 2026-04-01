@@ -1,0 +1,116 @@
+Build a production-quality web app called FlagLab for creating and managing flag football plays.
+
+Product goal:
+A drag-and-drop play designer for coaches that works on desktop and mobile. Users can place players on a football field, draw routes, save plays, organize playbooks, animate plays, and get suggested plays based on situation. The app should feel like a modern sports SaaS product, not a generic template.
+
+Core requirements:
+1. Tech stack
+- Use React + TypeScript.
+- Use a canvas-based editor with clean vector rendering and drag/drop interactions.
+- Use a modular component architecture.
+- Use a normalized JSON play schema.
+- Use local in-memory sample data first, but structure the code so Supabase/Postgres can be added easily.
+- No placeholder UI. Use a polished design system with dark and light mode.
+
+2. Main screens
+- Dashboard
+- Play Designer
+- Play Library
+- Suggested Plays
+- Play Detail / Animate Play
+- Settings
+
+3. Play Designer
+- Render a full football field with yard lines and optional red zone view.
+- Support 5v5 and 7v7 presets first.
+- Add draggable player tokens with labels: QB, C, WR1, WR2, WR3, RB, DB, Rusher, Safety, etc.
+- Allow offense and defense layers.
+- Allow users to drag players anywhere on the field.
+- Draw route types: straight, slant, out, in, post, corner, go, comeback, hitch, drag, wheel, motion, handoff/pitch, zone drop.
+- Route styling:
+  - solid line for standard route
+  - dashed line for motion
+  - dotted line for pitch/pass path
+  - arrowheads and editable control points
+- Allow snapping and alignment guides.
+- Add undo/redo.
+- Add flip play horizontally.
+- Add duplicate play.
+- Add clear/reset play.
+- Add player color customization and labels.
+
+4. Animation
+- Animate players along route paths.
+- Include play/pause/reset and speed control.
+- Show route progression over time.
+- Optionally animate football path.
+
+5. Play Library
+- Save plays with: title, formation, tags, notes, offense/defense, 5v5 or 7v7, difficulty, primary concept, man-beater / zone-beater flags, red zone / midfield / backed up field zone.
+- Search, filter, and sort plays.
+- Group by formation or concept.
+
+6. Suggested Plays
+- Include a built-in starter database of suggested flag football plays based on common public concepts.
+- Seed the starter catalog with route concepts and formations commonly used in youth flag football, including: hitch, slant, out, option, stop-and-go, post corner, chair, trips concepts, 5-on-5 flood-style concepts, shallow cross concepts.
+- For each suggested play include: play name, short coaching purpose, ideal situation, tags, likely coverage it attacks, player assignments, editable route map.
+- Let users click "Load into designer" to edit any suggested play.
+
+7. Data model
+Create a strong typed schema for: Team, PlayerTemplate, Formation, Play, RouteSegment, AnimationStep, PlayTag, SuggestedPlayProfile.
+
+A Play should include: id, title, mode, format (5v5 or 7v7), formationId, players[], routes[], notes, tags[], suggestedUse, coverageTargets[], fieldZone, createdAt, updatedAt.
+
+8. UX and design
+- Make the UI feel premium, like a modern coaching tool.
+- Left sidebar: tools and roster.
+- Center: field canvas.
+- Right sidebar: properties, route editor, play metadata.
+- Top bar: app branding, play title, save, animate, theme toggle.
+- Use excellent spacing, typography, and keyboard accessibility.
+- All interactive controls must have visible states.
+- Support responsive behavior; on mobile collapse sidebars into drawers.
+
+9. Design system
+- Build a real design system first.
+- Use semantic tokens for colors, spacing, radius, shadows, typography.
+- Include dark mode and light mode.
+- Use a sports-tech visual tone with restrained color, not flashy gradients.
+- Avoid generic AI SaaS aesthetics.
+
+10. Sample content
+Seed the app with: 8 formations, 30 suggested plays, both offensive and defensive examples, examples for 5v5 and 7v7, tags for man, zone, blitz, red zone, short yardage, gadget, motion.
+
+11. Code quality
+- Use reusable components.
+- Add clear type definitions.
+- Keep business logic separate from view code.
+- Include comments only where they clarify complex logic.
+- Make the code easy to extend with auth, database persistence, and AI generation later.
+
+12. Future-ready AI hooks
+Structure the app so an AI recommendation engine can later accept: down, distance, field position, opponent coverage tendency, player speed/skill profile and return ranked suggested plays from the internal play catalog.
+
+13. Deliverables
+- Working app UI with seeded data.
+- Functional drag-and-drop play editor.
+- Route drawing and editing.
+- Save/load sample plays locally in app state.
+- Suggested plays page with filters and load-to-designer action.
+- Animation for at least the main route types.
+
+Implementation order:
+Phase 1: app shell, design system, routing, seeded data models.
+Phase 2: field canvas and draggable players.
+Phase 3: route drawing/editing and play saving.
+Phase 4: animation engine.
+Phase 5: suggested plays catalog and filters.
+Phase 6: polish, responsive behavior, accessibility, and test fixes.
+
+Important:
+- Do not make this a static marketing site.
+- Do not use low-quality placeholder cards.
+- Do not hardcode everything in one file.
+- Build a real app structure from the beginning.
+- Use seeded JSON or TS data files for formations and suggested plays.
+- Make sure suggested plays are editable after loading them into the designer.

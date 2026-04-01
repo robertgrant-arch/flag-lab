@@ -1,0 +1,33 @@
+I need several enhancements to make Flag Lab more polished and feature-rich:
+
+## 1. Play Tagging & Categorization System
+- Add a tags/categories system to plays (e.g., "Red Zone", "Goal Line", "Screen", "Deep Pass", "Run", "Trick Play", "2-Point Conversion")
+- Users can create custom tags with color coding
+- Tags should be filterable in the Library and when adding plays to playbooks
+- Add a tag manager in Settings where users can create/edit/delete tags
+- Show tags as colored pills/badges on play cards in the Library and Playbook views
+
+## 2. Duplicate & Clone Features
+- Add a "Duplicate Play" button in the Designer that clones the current play with "(Copy)" appended to the name
+- Add a "Duplicate Playbook" option on playbook cards that clones a playbook with all its plays
+- Add a "Copy to Playbook" option when viewing a play in the Library — quick-add to any playbook from a dropdown
+
+## 3. Play Designer Enhancements
+- Add different route line styles: solid (run route), dashed (optional/read route), wavy (motion/shift)
+- Add route color coding by player position (QB = red, WR = blue, RB = green, etc.)
+- Add a "Formation Templates" dropdown in the Designer that pre-positions players into common formations (Trips Right, Spread, I-Form, Shotgun, etc.) for both 5v5 and 7v7
+- Add text annotations — click anywhere on the field to add a text label (for coaching notes like "Read 1", "Hot Route", etc.)
+- Add a grid/snap option toggle to help align players precisely
+
+## 4. Improved Print Layout
+- When printing a playbook, add a cover page with the playbook name, team name (from Settings), date, and a table of contents
+- Each play page should show: play number, play name, tags, formation diagram with routes, and the notes field
+- Add option to print 2 plays per page (compact mode) or 1 play per page (full size)
+- Add page numbers in the footer
+
+## 5. Dashboard Enhancements
+- Add a "Quick Actions" section with buttons: New Play, New Playbook, Browse Suggested Plays
+- Add a "Plays by Tag" breakdown chart
+- Make the Recent Plays list clickable — clicking opens the play in the Designer
+
+Please implement all of these. Take your time and be thorough.
