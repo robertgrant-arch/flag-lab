@@ -69,6 +69,7 @@ export default function Designer() {
         .then((serverPlay) => {
           const normalized = {
             ...serverPlay,
+            title: serverPlay.title || "Untitled Play",
             players: Array.isArray(serverPlay.players) ? serverPlay.players : [],
             routes: Array.isArray(serverPlay.routes) ? serverPlay.routes : [],
             tags: Array.isArray(serverPlay.tags) ? serverPlay.tags : [],
