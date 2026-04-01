@@ -3,7 +3,7 @@ import type { PlayerToken, RouteSegment } from "@/hooks/use-designer-state";
 
 export function usePlayAnimation(players: PlayerToken[], routes: RouteSegment[], isAnimating: boolean, speed: number = 1) {
   const [progress, setProgress] = useState(0); // 0 to 1
-  const requestRef = useRef<number>();
+  const requestRef = useRef<number | undefined>(undefined);
   const startTimeRef = useRef<number | null>(null);
   
   const DURATION = 3000 / speed; // 3 seconds base duration

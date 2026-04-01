@@ -21,8 +21,8 @@ export default function Library() {
   const { data: plays, isLoading } = useListPlays({
     search: search || undefined,
     tag: selectedTag || undefined,
-    format: selectedFormat as any || undefined,
-    mode: selectedMode as any || undefined,
+    format: (selectedFormat as "5v5" | "7v7") || undefined,
+    mode: (selectedMode as "offense" | "defense") || undefined,
   });
 
   const hasFilters = !!selectedTag || !!selectedFormat || !!selectedMode;
@@ -99,7 +99,6 @@ export default function Library() {
                     <SelectItem value="">Any</SelectItem>
                     <SelectItem value="offense">Offense</SelectItem>
                     <SelectItem value="defense">Defense</SelectItem>
-                    <SelectItem value="special">Special Teams</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useParams, useLocation } from "wouter";
 import { useDesignerState } from "@/hooks/use-designer-state";
-import type { PlayerToken } from "@/hooks/use-designer-state";
+import type { PlayerToken, RouteSegment } from "@/hooks/use-designer-state";
 import { DesignerCanvas } from "@/components/designer/DesignerCanvas";
 import { DesignerSidebarLeft } from "@/components/designer/DesignerSidebarLeft";
 import { DesignerSidebarRight } from "@/components/designer/DesignerSidebarRight";
@@ -19,9 +19,11 @@ export interface Annotation {
   text: string;
 }
 
-const DEFAULT_PLAYER_COLORS: Record<string, string> = {
-  offense: "#3b82f6",
-  defense: "#ef4444",
+const ROLE_COLORS: Record<string, string> = {
+  QB: "#ef4444", C: "#f97316", WR1: "#3b82f6", WR2: "#3b82f6", WR3: "#60a5fa",
+  WR4: "#93c5fd", RB: "#22c55e", FB: "#16a34a", TE: "#a855f7",
+  CB1: "#ef4444", CB2: "#f87171", S: "#dc2626", LB: "#f59e0b",
+  Rusher: "#b91c1c", DB3: "#fca5a5",
 };
 
 export default function Designer() {
@@ -113,8 +115,8 @@ export default function Designer() {
         routes: play.routes,
         tags: play.tags,
         notes: play.notes,
-        isManBeater: (play as any).isManBeater,
-        isZoneBeater: (play as any).isZoneBeater,
+        isManBeater: play.isManBeater,
+        isZoneBeater: play.isZoneBeater,
         coverageTargets: play.coverageTargets || [],
       };
 
@@ -181,7 +183,7 @@ export default function Designer() {
           color: p.color,
         })),
       ];
-      updatePlay({ players: newPlayers as any, routes: [] });
+      updatePlay({ players: newPlayers, routes: [] as RouteSegment[] });
       toast.success("Formation loaded");
     },
     [play.players, updatePlay],
@@ -189,13 +191,7 @@ export default function Designer() {
 
   const handleDropPlayer = useCallback(
     (role: string, team: "offense" | "defense", x: number, y: number) => {
-      const defaultColors: Record<string, string> = {
-        QB: "#ef4444", C: "#f97316", WR1: "#3b82f6", WR2: "#3b82f6", WR3: "#60a5fa",
-        WR4: "#93c5fd", RB: "#22c55e", FB: "#16a34a", TE: "#a855f7",
-        CB1: "#ef4444", CB2: "#f87171", S: "#dc2626", LB: "#f59e0b",
-        Rusher: "#b91c1c", DB3: "#fca5a5",
-      };
-      const color = defaultColors[role] || (team === "offense" ? "#3b82f6" : "#ef4444");
+      const color = ROLE_COLORS[role] ?? (team === "offense" ? "#3b82f6" : "#ef4444");
       addPlayer({
         id: `player-${role}-${Date.now()}`,
         role,
@@ -237,8 +233,8 @@ export default function Designer() {
     );
   }
 
-  const selectedPlayer = play.players?.find((p) => p.id === selectedPlayerId) || null;
-  const selectedRoute = play.routes?.find((r) => r.id === selectedRouteId) || null;
+  const selectedPlayer = play.players?.find((p) => p.id === selectedPlayerId) ?? null;
+  const selectedRoute = play.routes?.find((r) => r.id === selectedRouteId) ?? null;
 
   return (
     <AppLayout headerTitle={play.title || "Play Designer"}>
@@ -292,8 +288,8 @@ export default function Designer() {
           </div>
 
           <DesignerSidebarRight
-            play={play as any}
-            onUpdatePlay={updatePlay as any}
+            play={play}
+            onUpdatePlay={updatePlay}
             selectedPlayer={selectedPlayer}
             onUpdatePlayer={updatePlayer}
             onRemovePlayer={removePlayer}

@@ -122,9 +122,9 @@ export function PlayCard({ play, isSuggested }: PlayCardProps) {
         <div className="flex items-start justify-between gap-2">
           <CardTitle
             className="text-lg font-bold line-clamp-1 group-hover:text-primary transition-colors"
-            title={play.title || (play as SuggestedPlay).name}
+            title={"title" in play ? play.title : play.name}
           >
-            {play.title || (play as SuggestedPlay).name}
+            {"title" in play ? play.title : play.name}
           </CardTitle>
           <div className="flex gap-1 shrink-0">
             <Badge variant="secondary" className="text-xs">{play.format}</Badge>
