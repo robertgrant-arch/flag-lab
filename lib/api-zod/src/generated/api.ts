@@ -67,6 +67,8 @@ export const ListPlaysResponseItem = zod.object({
         "handoff",
         "zone_drop",
         "screen",
+        "curve",
+        "angle",
       ]),
       points: zod.array(
         zod.object({
@@ -74,7 +76,7 @@ export const ListPlaysResponseItem = zod.object({
           y: zod.number(),
         }),
       ),
-      style: zod.enum(["solid", "dashed", "dotted"]),
+      style: zod.enum(["solid", "dashed", "dotted", "wavy"]),
       color: zod.string().nullish(),
     }),
   ),
@@ -90,6 +92,7 @@ export const ListPlaysResponseItem = zod.object({
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
+
 export const ListPlaysResponse = zod.array(ListPlaysResponseItem);
 
 /**
@@ -137,6 +140,8 @@ export const CreatePlayBody = zod.object({
           "handoff",
           "zone_drop",
           "screen",
+          "curve",
+          "angle",
         ]),
         points: zod.array(
           zod.object({
@@ -144,7 +149,7 @@ export const CreatePlayBody = zod.object({
             y: zod.number(),
           }),
         ),
-        style: zod.enum(["solid", "dashed", "dotted"]),
+        style: zod.enum(["solid", "dashed", "dotted", "wavy"]),
         color: zod.string().optional(),
       }),
     )
@@ -207,6 +212,8 @@ export const GetPlayResponse = zod.object({
         "handoff",
         "zone_drop",
         "screen",
+        "curve",
+        "angle",
       ]),
       points: zod.array(
         zod.object({
@@ -214,7 +221,7 @@ export const GetPlayResponse = zod.object({
           y: zod.number(),
         }),
       ),
-      style: zod.enum(["solid", "dashed", "dotted"]),
+      style: zod.enum(["solid", "dashed", "dotted", "wavy"]),
       color: zod.string().nullish(),
     }),
   ),
@@ -280,6 +287,8 @@ export const UpdatePlayBody = zod.object({
           "handoff",
           "zone_drop",
           "screen",
+          "curve",
+          "angle",
         ]),
         points: zod.array(
           zod.object({
@@ -287,7 +296,7 @@ export const UpdatePlayBody = zod.object({
             y: zod.number(),
           }),
         ),
-        style: zod.enum(["solid", "dashed", "dotted"]),
+        style: zod.enum(["solid", "dashed", "dotted", "wavy"]),
         color: zod.string().optional(),
       }),
     )
@@ -343,6 +352,8 @@ export const UpdatePlayResponse = zod.object({
         "handoff",
         "zone_drop",
         "screen",
+        "curve",
+        "angle",
       ]),
       points: zod.array(
         zod.object({
@@ -350,7 +361,7 @@ export const UpdatePlayResponse = zod.object({
           y: zod.number(),
         }),
       ),
-      style: zod.enum(["solid", "dashed", "dotted"]),
+      style: zod.enum(["solid", "dashed", "dotted", "wavy"]),
       color: zod.string().nullish(),
     }),
   ),
@@ -394,6 +405,7 @@ export const ListPlaybooksResponseItem = zod.object({
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
+
 export const ListPlaybooksResponse = zod.array(ListPlaybooksResponseItem);
 
 /**
@@ -484,6 +496,7 @@ export const ListFormationsResponseItem = zod.object({
     }),
   ),
 });
+
 export const ListFormationsResponse = zod.array(ListFormationsResponseItem);
 
 /**
@@ -545,6 +558,8 @@ export const ListSuggestedPlaysResponseItem = zod.object({
         "handoff",
         "zone_drop",
         "screen",
+        "curve",
+        "angle",
       ]),
       points: zod.array(
         zod.object({
@@ -552,12 +567,13 @@ export const ListSuggestedPlaysResponseItem = zod.object({
           y: zod.number(),
         }),
       ),
-      style: zod.enum(["solid", "dashed", "dotted"]),
+      style: zod.enum(["solid", "dashed", "dotted", "wavy"]),
       color: zod.string().nullish(),
     }),
   ),
   formationId: zod.string().nullish(),
 });
+
 export const ListSuggestedPlaysResponse = zod.array(
   ListSuggestedPlaysResponseItem,
 );
@@ -632,6 +648,8 @@ export const GetRecentPlaysResponseItem = zod.object({
         "handoff",
         "zone_drop",
         "screen",
+        "curve",
+        "angle",
       ]),
       points: zod.array(
         zod.object({
@@ -639,7 +657,7 @@ export const GetRecentPlaysResponseItem = zod.object({
           y: zod.number(),
         }),
       ),
-      style: zod.enum(["solid", "dashed", "dotted"]),
+      style: zod.enum(["solid", "dashed", "dotted", "wavy"]),
       color: zod.string().nullish(),
     }),
   ),
@@ -655,6 +673,7 @@ export const GetRecentPlaysResponseItem = zod.object({
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
+
 export const GetRecentPlaysResponse = zod.array(GetRecentPlaysResponseItem);
 
 /**
@@ -665,6 +684,7 @@ export const GetPlaysByFormationResponseItem = zod.object({
   formationName: zod.string(),
   count: zod.number(),
 });
+
 export const GetPlaysByFormationResponse = zod.array(
   GetPlaysByFormationResponseItem,
 );
