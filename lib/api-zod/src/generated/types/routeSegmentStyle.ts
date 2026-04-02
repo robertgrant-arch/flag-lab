@@ -13,4 +13,5 @@ export const RouteSegmentStyle = {
   solid: "solid",
   dashed: "dashed",
   dotted: "dotted",
+    wavy: "wavy",
 } as const;
