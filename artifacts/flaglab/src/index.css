@@ -72,7 +72,6 @@
   --opaque-button-border-intensity: -8;
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
-
   --background: 0 0% 98%;
   --foreground: 222 47% 8%;
   --border: 214 31.8% 91.4%;
@@ -107,7 +106,6 @@
   --chart-3: 38 92% 55%;
   --chart-4: 0 84% 60%;
   --chart-5: 271 91% 65%;
-
   --app-font-sans: 'Inter', sans-serif;
   --app-font-serif: Georgia, serif;
   --app-font-mono: Menlo, monospace;
@@ -122,7 +120,6 @@
   --shadow-2xl: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
-
   --sidebar-primary-border: hsl(from hsl(var(--sidebar-primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
   --sidebar-accent-border: hsl(from hsl(var(--sidebar-accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
   --primary-border: hsl(from hsl(var(--primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
@@ -138,7 +135,6 @@
   --opaque-button-border-intensity: 9;
   --elevate-1: rgba(255,255,255, .04);
   --elevate-2: rgba(255,255,255, .09);
-
   --background: 222 47% 8%;
   --foreground: 210 40% 93%;
   --border: 217 32% 18%;
@@ -181,7 +177,7 @@
 
 @media print {
   @page {
-    margin: 1.5cm;
+    margin: 1cm;
     size: A4 portrait;
   }
 
@@ -189,6 +185,8 @@
     background: white !important;
     color: black !important;
     font-size: 11pt;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
   .print\:hidden {
@@ -201,6 +199,8 @@
 
   main {
     overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   .rounded-xl, .rounded-lg, .rounded-md {
@@ -210,5 +210,43 @@
   a {
     color: inherit !important;
     text-decoration: none !important;
+  }
+
+  /* ── Force SVG field backgrounds and lines to print ── */
+  svg {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  svg rect {
+    fill: #1a4a1a !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  svg line {
+    stroke: #ffffff88 !important;
+    stroke-width: 1px !important;
+  }
+
+  svg polyline {
+        stroke: #ffffff !important;
+    stroke-width: 2.5 !important;
+  }
+
+  svg circle {
+    fill: #ffffff !important;
+    stroke: #000000 !important;
+    stroke-width: 0.8 !important;
+  }
+
+  /* ── Print play card borders ── */
+  .print-play-card {
+    border: 2px solid #333 !important;
+  }
+
+  /* ── Cover page ── */
+  .print-cover-page {
+    page-break-after: always;
   }
 }
