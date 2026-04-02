@@ -25,4 +25,6 @@ export const RouteSegmentType = {
   handoff: "handoff",
   zone_drop: "zone_drop",
   screen: "screen",
+    curve: "curve",
+  angle: "angle",
 } as const;
