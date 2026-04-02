@@ -1,7 +1,12 @@
 {
   "version": 2,
-  "buildCommand": "pnpm install && pnpm --filter @workspace/flaglab run build",
+  "buildCommand": "pnpm install && pnpm --filter @workspace/api-server run build && pnpm --filter @workspace/flaglab run build",
   "outputDirectory": "artifacts/flaglab/dist/public",
+  "functions": {
+    "api/index.ts": {
+      "includeFiles": "artifacts/api-server/dist/**"
+    }
+  },
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/index" },
     { "source": "/:path*", "destination": "/index.html" }
