@@ -1,10 +1,10 @@
-import { ReactNode } from "react";
+import { ReactNode, useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
-import { 
-  LayoutDashboard, 
-  PenTool, 
-  Library, 
-  Lightbulb, 
+import {
+  LayoutDashboard,
+  PenTool,
+  Library,
+  Lightbulb,
   Settings as SettingsIcon,
   BookOpen,
   Menu,
@@ -12,9 +12,9 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { 
-  Sidebar, 
-  SidebarContent, 
+import {
+  Sidebar,
+  SidebarContent,
   SidebarHeader,
   SidebarGroup,
   SidebarGroupContent,
@@ -29,10 +29,41 @@ interface AppLayoutProps {
   children: ReactNode;
   headerTitle?: string;
   headerActions?: ReactNode;
+  onTitleChange?: (title: string) => void;
+  onNewPlay?: () => void;
 }
 
-export function AppLayout({ children, headerTitle, headerActions }: AppLayoutProps) {
-  const [location] = useLocation();
+export function AppLayout({ children, headerTitle, headerActions, onTitleChange, onNewPlay }: AppLayoutProps) {
+  const [location, setLocation] = useLocation();
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editTitle, setEditTitle] = useState(headerTitle || "");
+  const titleInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setEditTitle(headerTitle || "");
+  }, [headerTitle]);
+
+  useEffect(() => {
+    if (isEditingTitle && titleInputRef.current) {
+      titleInputRef.current.focus();
+      titleInputRef.current.select();
+    }
+  }, [isEditingTitle]);
+
+  const handleTitleSubmit = () => {
+    setIsEditingTitle(false);
+    if (onTitleChange && editTitle.trim()) {
+      onTitleChange(editTitle.trim());
+    }
+  };
+
+  const handleNewPlay = () => {
+    if (onNewPlay) {
+      onNewPlay();
+    } else {
+      setLocation(`/designer/new?t=${Date.now()}`);
+    }
+  };
 
   const navItems = [
     { title: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -49,9 +80,7 @@ export function AppLayout({ children, headerTitle, headerActions }: AppLayoutPro
         <Sidebar className="border-r border-sidebar-border bg-sidebar">
           <SidebarHeader className="h-14 flex items-center px-4 border-b border-sidebar-border/50">
             <Link href="/" className="flex items-center gap-2 font-bold text-lg text-primary tracking-tight">
-              <div className="w-6 h-6 rounded-sm bg-primary flex items-center justify-center">
-                <div className="w-3 h-3 bg-primary-foreground rounded-full" />
-              </div>
+              <div className="w-6 h-6 rounded-full bg-primary" />
               FlagLab
             </Link>
           </SidebarHeader>
@@ -60,51 +89,69 @@ export function AppLayout({ children, headerTitle, headerActions }: AppLayoutPro
               <SidebarGroupContent>
                 <SidebarMenu>
                   {navItems.map((item) => (
-                    <SidebarMenuItem key={item.href}>
-                      <SidebarMenuButton 
-                        asChild 
-                        isActive={location === item.href || (item.href !== '/' && location.startsWith(item.href))}
-                        tooltip={item.title}
-                      >
-                        <Link href={item.href} className="flex items-center gap-3 w-full">
-                          <item.icon className="h-4 w-4" />
-                          <span>{item.title}</span>
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild isActive={location === item.href || (item.href !== "/" && location.startsWith(item.href))}>
+                        <Link href={item.href}>
+                          <item.icon className="w-4 h-4" />
+                          {item.title}
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
-                  <div className="px-2 py-2 mt-4">
-                    <Button asChild className="w-full justify-start gap-2 shadow-sm" size="sm">
-                      <Link href="/designer">
-                        <Plus className="h-4 w-4" />
-                        <span>New Play</span>
-                      </Link>
-                    </Button>
-                  </div>
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
           </SidebarContent>
+          <div className="p-3 mt-auto">
+            <Button
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
+              onClick={handleNewPlay}
+            >
+              <Plus className="w-4 h-4" />
+              New Play
+            </Button>
+          </div>
         </Sidebar>
-        
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 shrink-0 border-b bg-background flex items-center justify-between px-4 sticky top-0 z-10">
-            <div className="flex items-center gap-3">
-              <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
-              {headerTitle && (
-                <>
-                  <div className="h-4 w-[1px] bg-border" />
-                  <h1 className="font-semibold text-sm truncate max-w-[200px] sm:max-w-md">{headerTitle}</h1>
-                </>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
+          <header className="h-14 border-b border-border flex items-center px-4 gap-3 bg-background/80 backdrop-blur-sm sticky top-0 z-30">
+            <SidebarTrigger>
+              <Menu className="w-5 h-5" />
+            </SidebarTrigger>
+            {headerTitle && (
+              <>
+                <div className="w-px h-6 bg-border" />
+                {isEditingTitle && onTitleChange ? (
+                  <input
+                    ref={titleInputRef}
+                    className="text-sm font-semibold bg-transparent border border-primary/50 rounded px-2 py-1 outline-none focus:border-primary text-foreground"
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    onBlur={handleTitleSubmit}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleTitleSubmit();
+                      if (e.key === "Escape") {
+                        setEditTitle(headerTitle || "");
+                        setIsEditingTitle(false);
+                      }
+                    }}
+                  />
+                ) : (
+                  <h1
+                    className={`text-sm font-semibold truncate ${onTitleChange ? "cursor-pointer hover:text-primary transition-colors" : ""}`}
+                    onClick={() => { if (onTitleChange) setIsEditingTitle(true); }}
+                    title={onTitleChange ? "Click to edit title" : undefined}
+                  >
+                    {headerTitle}
+                  </h1>
+                )}
+              </>
+            )}
+            <div className="ml-auto flex items-center gap-2">
               {headerActions}
-              <div className="h-4 w-[1px] bg-border mx-1 hidden sm:block" />
               <ThemeToggle />
             </div>
           </header>
-          <main className="flex-1 overflow-auto flex flex-col">
+          <main className="flex-1 overflow-hidden">
             {children}
           </main>
         </div>
