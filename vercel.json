@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "pnpm install && pnpm --filter @workspace/api-server run build && pnpm --filter @workspace/flaglab run build",
+  "buildCommand": "pnpm install && pnpm --filter @workspace/db run push-force && pnpm --filter @workspace/api-server run build && pnpm --filter @workspace/flaglab run build",
   "outputDirectory": "artifacts/flaglab/dist/public",
   "functions": {
     "api/index.ts": {
