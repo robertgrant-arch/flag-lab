@@ -124,13 +124,13 @@ export default function Designer() {
       const payload = {
         title: play.title, mode: play.mode, format: play.format,
         players: play.players, routes: play.routes, tags: play.tags,
-        notes: play.notes, isManBeater: play.isManBeater,
-        isZoneBeater: play.isZoneBeater, coverageTargets: play.coverageTargets || [],
+        notes: play.notes ?? undefined, isManBeater: play.isManBeater ?? undefined,
+        isZoneBeater: play.isZoneBeater ?? undefined, coverageTargets: play.coverageTargets || [],
       };
       if (isNew || play.id === "new") {
         const res = await fetch("/api/plays", {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+                    body: JSON.stringify(payload, (_, v) => v === null ? undefined : v),
         });
         if (!res.ok) throw new Error("Create failed");
         const newPlay = await res.json();
@@ -142,7 +142,7 @@ export default function Designer() {
       } else {
         const res = await fetch(`/api/plays/${play.id}`, {
           method: "PUT", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+                    body: JSON.stringify(payload, (_, v) => v === null ? undefined : v),
         });
         if (!res.ok) throw new Error("Save failed");
               const savedPlay = await res.json();
