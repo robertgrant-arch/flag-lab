@@ -35,20 +35,9 @@ export default function Designer() {
   const { settings } = useSettings();
 
   const {
-    play,
-    canUndo,
-    canRedo,
-    init,
-    updatePlay,
-    addPlayer,
-    updatePlayer,
-    updatePlayerPosition,
-    removePlayer,
-    addRoute,
-    updateRoute,
-    removeRoute,
-    undo,
-    redo,
+    play, canUndo, canRedo, init, updatePlay,
+    addPlayer, updatePlayer, updatePlayerPosition, removePlayer,
+    addRoute, updateRoute, removeRoute, undo, redo,
   } = useDesignerState();
 
   const [initialized, setInitialized] = useState(false);
@@ -92,39 +81,55 @@ export default function Designer() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
-        e.preventDefault();
-        undo();
-      }
-      if ((e.ctrlKey || e.metaKey) && (e.key === "y" || (e.key === "z" && e.shiftKey))) {
-        e.preventDefault();
-        redo();
-      }
+      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) { e.preventDefault(); undo(); }
+      if ((e.ctrlKey || e.metaKey) && (e.key === "y" || (e.key === "z" && e.shiftKey))) { e.preventDefault(); redo(); }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [undo, redo]);
 
+  const handleNewPlay = useCallback(() => {
+    const freshPlay = {
+      id: "new",
+      title: "Untitled Play",
+      mode: "offense",
+      format: "5v5",
+      players: [] as PlayerToken[],
+      routes: [] as RouteSegment[],
+      tags: [] as string[],
+      coverageTargets: [] as string[],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    init(freshPlay);
+    setSelectedPlayerId(null);
+    setSelectedRouteId(null);
+    setAnnotations([]);
+    setIsAnimating(false);
+    setAnnotationMode(false);
+    setIsDrawingRoute(false);
+    setDrawRequest(null);
+    setInitialized(true);
+    setLocation("/designer");
+    toast.success("New play created");
+  }, [init, setLocation]);
+
+  const handleTitleChange = useCallback((title: string) => {
+    updatePlay({ title });
+  }, [updatePlay]);
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
       const payload = {
-        title: play.title,
-        mode: play.mode,
-        format: play.format,
-        players: play.players,
-        routes: play.routes,
-        tags: play.tags,
-        notes: play.notes,
-        isManBeater: play.isManBeater,
-        isZoneBeater: play.isZoneBeater,
-        coverageTargets: play.coverageTargets || [],
+        title: play.title, mode: play.mode, format: play.format,
+        players: play.players, routes: play.routes, tags: play.tags,
+        notes: play.notes, isManBeater: play.isManBeater,
+        isZoneBeater: play.isZoneBeater, coverageTargets: play.coverageTargets || [],
       };
-
       if (isNew || play.id === "new") {
         const res = await fetch("/api/plays", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+          method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
         if (!res.ok) throw new Error("Create failed");
@@ -136,8 +141,7 @@ export default function Designer() {
         setLocation(`/designer/${newPlay.id}`);
       } else {
         const res = await fetch(`/api/plays/${play.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+          method: "PATCH", headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
         if (!res.ok) throw new Error("Save failed");
@@ -149,11 +153,8 @@ export default function Designer() {
         queryClient.invalidateQueries({ queryKey: ["/api/plays"] });
         toast.success("Play saved!");
       }
-    } catch {
-      toast.error("Failed to save play");
-    } finally {
-      setIsSaving(false);
-    }
+    } catch { toast.error("Failed to save play"); }
+    finally { setIsSaving(false); }
   };
 
   const handleDuplicate = async () => {
@@ -164,9 +165,7 @@ export default function Designer() {
       const newPlay = await res.json();
       toast.success(`Duplicated as "${newPlay.title}"`);
       setLocation(`/designer/${newPlay.id}`);
-    } catch {
-      toast.error("Failed to duplicate play");
-    }
+    } catch { toast.error("Failed to duplicate play"); }
   };
 
   const handleLoadFormation = useCallback(
@@ -175,13 +174,8 @@ export default function Designer() {
       const newPlayers: PlayerToken[] = [
         ...defPlayers,
         ...players.map((p) => ({
-          id: `${p.id}-${Date.now()}`,
-          role: p.role,
-          label: p.role,
-          team: p.team as "offense" | "defense",
-          x: p.x,
-          y: p.y,
-          color: p.color,
+          id: `${p.id}-${Date.now()}`, role: p.role, label: p.role,
+          team: p.team as "offense" | "defense", x: p.x, y: p.y, color: p.color,
         })),
       ];
       updatePlay({ players: newPlayers, routes: [] as RouteSegment[] });
@@ -194,13 +188,7 @@ export default function Designer() {
     (role: string, team: "offense" | "defense", x: number, y: number) => {
       const color = ROLE_COLORS[role] ?? (team === "offense" ? "#3b82f6" : "#ef4444");
       addPlayer({
-        id: `player-${role}-${Date.now()}`,
-        role,
-        label: role,
-        team,
-        x,
-        y,
-        color,
+        id: `player-${role}-${Date.now()}`, role, label: role, team, x, y, color,
       });
     },
     [addPlayer],
@@ -226,9 +214,9 @@ export default function Designer() {
 
   if (!isNew && !initialized) {
     return (
-      <AppLayout headerTitle="Loading Designer…">
-        <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <AppLayout headerTitle="Loading…">
+        <div className="flex items-center justify-center h-full">
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
         </div>
       </AppLayout>
     );
@@ -238,7 +226,11 @@ export default function Designer() {
   const selectedRoute = play.routes?.find((r) => r.id === selectedRouteId) ?? null;
 
   return (
-    <AppLayout headerTitle={play.title || "Play Designer"}>
+    <AppLayout
+      headerTitle={play.title || "Play Designer"}
+      onTitleChange={handleTitleChange}
+      onNewPlay={handleNewPlay}
+    >
       <div className="flex flex-col flex-1 overflow-hidden">
         <DesignerToolbar
           canUndo={canUndo}
