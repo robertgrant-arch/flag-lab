@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useRef, useCallback } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useParams, Link } from "wouter";
 import { useGetPlay } from "@workspace/api-client-react";
@@ -10,6 +11,7 @@ import {
   Play as PlayIcon,
   Square,
   AlertCircle,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -51,6 +53,101 @@ const noopDrop = (
   _x: number,
   _y: number
 ) => {};
+
+// ─── SVG → PNG export ───────────────────────────────────────────────────────
+//
+// Pipeline:
+//   1. querySelector("svg") inside the canvas container
+//   2. Clone + fix width/height/viewBox attributes
+//   3. XMLSerializer → Blob URL
+//   4. Load into a hidden <img>, draw to an off-screen <canvas> at 2×
+//   5. canvas.toBlob("image/png") → share (Web Share API) or anchor download
+//
+async function exportCanvasToPng(
+  container: HTMLElement,
+  filename: string
+): Promise<void> {
+  const svg = container.querySelector("svg");
+  if (!svg) throw new Error("No SVG found in canvas container");
+
+  // DesignerCanvas hard-codes a 533 × 1200 viewBox
+  const SVG_W = 533;
+  const SVG_H = 1200;
+  // 2× scale for retina / phone screens
+  const SCALE = 2;
+  const PX_W = SVG_W * SCALE;
+  const PX_H = SVG_H * SCALE;
+
+  // Clone so mutations don't touch the live DOM
+  const cloned = svg.cloneNode(true) as SVGElement;
+  cloned.setAttribute("width", String(SVG_W));
+  cloned.setAttribute("height", String(SVG_H));
+  if (!cloned.getAttribute("viewBox")) {
+    cloned.setAttribute("viewBox", `0 0 ${SVG_W} ${SVG_H}`);
+  }
+
+  const serialized = new XMLSerializer().serializeToString(cloned);
+  const svgBlob = new Blob([serialized], {
+    type: "image/svg+xml;charset=utf-8",
+  });
+  const svgUrl = URL.createObjectURL(svgBlob);
+
+  try {
+    const pngBlob = await new Promise<Blob>((resolve, reject) => {
+      const img = new Image();
+
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = PX_W;
+        canvas.height = PX_H;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          reject(new Error("Could not get 2D canvas context"));
+          return;
+        }
+        // Solid background so transparency doesn't become black on iOS
+        ctx.fillStyle = "#1a3a1a";
+        ctx.fillRect(0, 0, PX_W, PX_H);
+        ctx.drawImage(img, 0, 0, PX_W, PX_H);
+        canvas.toBlob(
+          (blob) => {
+            if (blob) resolve(blob);
+            else reject(new Error("canvas.toBlob returned null"));
+          },
+          "image/png"
+        );
+      };
+
+      img.onerror = () => reject(new Error("Failed to load SVG as image"));
+      img.src = svgUrl;
+    });
+
+    // ── Web Share API — shows native iOS/Android share sheet ───────────
+    const pngFile = new File([pngBlob], filename, { type: "image/png" });
+    if (navigator.canShare && navigator.canShare({ files: [pngFile] })) {
+      await navigator.share({
+        files: [pngFile],
+        title: filename.replace(/\.png$/i, ""),
+      });
+      return;
+    }
+
+    // ── Anchor download fallback (desktop + unsupported browsers) ───────
+    const downloadUrl = URL.createObjectURL(pngBlob);
+    const a = document.createElement("a");
+    a.href = downloadUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    // Delay revoke so Safari has time to start the download
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(downloadUrl);
+    }, 200);
+  } finally {
+    URL.revokeObjectURL(svgUrl);
+  }
+}
 
 // ─── Sub-components ─────────────────────────────────────────────────────────
 
@@ -114,6 +211,25 @@ export default function LibraryDetail() {
   const [isAnimating, setIsAnimating] = useState(false);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Ref on the <main> wrapper — exportCanvasToPng queries for the SVG inside it
+  const canvasContainerRef = useRef<HTMLElement>(null);
+
+  const handleSaveToPhone = useCallback(async () => {
+    if (!canvasContainerRef.current || isSaving) return;
+    setIsSaving(true);
+    try {
+      const raw = play?.title?.trim() || "play";
+      // Strip characters that are invalid in filenames
+      const safeTitle = raw.replace(/[^a-z0-9_\-\s]/gi, "").trim() || "play";
+      await exportCanvasToPng(canvasContainerRef.current, `${safeTitle}.png`);
+    } catch (err) {
+      console.error("[LibraryDetail] Save to phone failed:", err);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [play?.title, isSaving]);
 
   // ── Loading state ──────────────────────────────────────────────────────────
   if (isLoading) {
@@ -176,13 +292,16 @@ export default function LibraryDetail() {
             {play.title ?? "Untitled Play"}
           </span>
           {play.format && (
-            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">
+            <Badge
+              variant="secondary"
+              className="text-[10px] px-1.5 py-0 shrink-0"
+            >
               {play.format}
             </Badge>
           )}
         </div>
 
-        {/* Right: animate + edit */}
+        {/* Right: animate + save + edit */}
         <div className="flex items-center gap-2">
           <Button
             variant={isAnimating ? "default" : "outline"}
@@ -202,6 +321,27 @@ export default function LibraryDetail() {
               </>
             )}
           </Button>
+
+          {/* ── Save to Phone ─────────────────────────────────────────────── */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 text-xs"
+            onClick={handleSaveToPhone}
+            disabled={isSaving}
+            title="Save play as image"
+          >
+            {isSaving ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Download className="w-3.5 h-3.5" />
+            )}
+            {/* Label: hidden on xs, visible on sm+ */}
+            <span className="hidden sm:inline">
+              {isSaving ? "Saving…" : "Save"}
+            </span>
+          </Button>
+
           <Link href={`/designer/${id}`}>
             <Button size="sm" className="gap-1.5 text-xs">
               <Edit2 className="w-3.5 h-3.5" />
@@ -256,7 +396,15 @@ export default function LibraryDetail() {
         </aside>
 
         {/* ── CENTER: Canvas ────────────────────────────────────────────────── */}
-        <main className="flex-1 overflow-hidden flex items-start justify-center bg-muted/20">
+        {/*
+          ref is placed here (not on DesignerCanvas itself) so that
+          querySelector("svg") reliably finds the SVG regardless of how
+          DesignerCanvas renders its internals.
+        */}
+        <main
+          ref={canvasContainerRef}
+          className="flex-1 overflow-hidden flex items-start justify-center bg-muted/20"
+        >
           <DesignerCanvas
             players={players}
             routes={routes}
@@ -324,7 +472,9 @@ export default function LibraryDetail() {
                   >
                     <span
                       className={`w-1.5 h-1.5 rounded-full ${
-                        play.manBeater ? "bg-blue-400" : "bg-muted-foreground/30"
+                        play.manBeater
+                          ? "bg-blue-400"
+                          : "bg-muted-foreground/30"
                       }`}
                     />
                     Man
@@ -389,3 +539,4 @@ export default function LibraryDetail() {
     </AppLayout>
   );
 }
+```
