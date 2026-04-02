@@ -35,7 +35,7 @@ import {
 import { useListPlays } from "@workspace/api-client-react";
 import { useSettings } from "@/lib/settings";
 
-// ── Mini SVG field preview ─────────────────────────────────────────────────────
+// -- Mini SVG field preview
 function MiniField({ play }: { play: PlayInPlaybook }) {
   const players = Array.isArray(play.players) ? play.players : [];
   const routes = Array.isArray(play.routes) ? play.routes : [];
@@ -43,13 +43,13 @@ function MiniField({ play }: { play: PlayInPlaybook }) {
   return (
     <svg viewBox="0 0 106.6 240" className="w-full h-full" style={{ background: "#1a4a1a" }}>
       <rect x="0" y="0" width="106.6" height="240" fill="#1a4a1a" />
-      <line x1="0" y1="120" x2="106.6" y2="120" stroke="#ffffff44" strokeWidth="0.5" strokeDasharray="2,2" />
+      <line x1="0" y1="120" x2="106.6" y2="120" stroke="#ffffff88" strokeWidth="1" strokeDasharray="2,2" />
       {routes.map((route: unknown, i: number) => {
         const r = route as { points?: Array<{ x: number; y: number }> };
         if (!r.points || r.points.length < 2) return null;
         const pts = r.points.map((p) => `${(p.x / 533) * 106.6},${(p.y / 1200) * 240}`).join(" ");
         return (
-          <polyline key={i} points={pts} fill="none" stroke="#4ade80" strokeWidth="0.8" strokeLinejoin="round" strokeLinecap="round" />
+          <polyline key={i} points={pts} fill="none" stroke="#ffffff" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
         );
       })}
       {players.map((player: unknown, i: number) => {
@@ -57,13 +57,13 @@ function MiniField({ play }: { play: PlayInPlaybook }) {
         if (p.x == null || p.y == null) return null;
         const cx = (p.x / 533) * 106.6;
         const cy = (p.y / 1200) * 240;
-        return <circle key={i} cx={cx} cy={cy} r="3" fill={p.color || "#ffffff"} />;
+        return <circle key={i} cx={cx} cy={cy} r="3.5" fill={p.color || "#ffffff"} stroke="#000000" strokeWidth="0.8" />;
       })}
     </svg>
   );
 }
 
-// ── Add Play picker dialog ────────────────────────────────────────────────────
+// -- Add Play picker dialog
 function AddPlayDialog({
   open,
   onOpenChange,
@@ -78,11 +78,9 @@ function AddPlayDialog({
   const [search, setSearch] = useState("");
   const { data: plays } = useListPlays({});
   const addMutation = useAddPlayToPlaybook();
-
   const filtered = (plays ?? []).filter(
     (p) => !existingPlayIds.has(p.id) && p.title.toLowerCase().includes(search.toLowerCase()),
   );
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
@@ -93,7 +91,7 @@ function AddPlayDialog({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             className="pl-9"
-            placeholder="Search plays…"
+            placeholder="Search plays..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             autoFocus
@@ -131,7 +129,7 @@ function AddPlayDialog({
   );
 }
 
-// ── PlayRow (screen) & PlayPrintCard (print) ──────────────────────────────────
+// -- PlayRow (screen) & PlayPrintCard (print)
 function PlayRow({
   play,
   index,
@@ -149,7 +147,6 @@ function PlayRow({
 }) {
   const { settings } = useSettings();
   const removeMutation = useRemovePlayFromPlaybook();
-
   return (
     <div className="flex items-center gap-4 p-3 rounded-xl border bg-card group">
       <div className="w-16 h-16 rounded-lg overflow-hidden shrink-0 border border-border/50">
@@ -203,20 +200,17 @@ function PlayRow({
   );
 }
 
-// ── Main page ─────────────────────────────────────────────────────────────────
+// -- Main page
 export default function PlaybookDetail() {
   const params = useParams<{ id: string }>();
   const [, setLocation] = useLocation();
   const id = params.id;
   const { settings } = useSettings();
-
   const { data: playbook, isLoading: isLoadingPb } = usePlaybook(id);
   const { data: plays, isLoading: isLoadingPlays } = usePlaybookPlays(id);
   const reorderMutation = useReorderPlaybookPlays();
-
   const [showAdd, setShowAdd] = useState(false);
   const [twoPerPage, setTwoPerPage] = useState(false);
-
   const existingIds = new Set((plays ?? []).map((p) => p.id));
 
   const move = useCallback(
@@ -270,7 +264,7 @@ export default function PlaybookDetail() {
           All Playbooks
         </button>
 
-        {/* ── PRINT: Cover page ─────────────────────────────────────────────── */}
+        {/* PRINT: Cover page */}
         <div className="hidden print:block print-cover-page">
           <div style={{ textAlign: "center", padding: "60px 40px 40px", borderBottom: "3px solid #333" }}>
             <div style={{ fontSize: "13px", textTransform: "uppercase", letterSpacing: "2px", color: "#666", marginBottom: "24px" }}>
@@ -290,7 +284,6 @@ export default function PlaybookDetail() {
               <span>{today}</span>
             </div>
           </div>
-
           {/* TOC */}
           <div style={{ padding: "32px 40px" }}>
             <h2 style={{ fontSize: "16px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "16px", borderBottom: "1px solid #ddd", paddingBottom: "8px" }}>
@@ -313,7 +306,7 @@ export default function PlaybookDetail() {
               ))}
             </ol>
           </div>
-        </div>
+        </div>ds
 
         {/* Screen header */}
         <div className="mb-6 print:hidden">
@@ -369,23 +362,23 @@ export default function PlaybookDetail() {
                   <div key={play.id} className="print-play-card" style={{
                     pageBreakInside: "avoid",
                     pageBreakAfter: twoPerPage ? (index % 2 === 1 ? "always" : "auto") : "always",
-                    border: "1px solid #ddd",
+                    border: "2px solid #333",
                     borderRadius: "8px",
                     padding: "16px",
                     marginBottom: twoPerPage ? "16px" : "0",
                     position: "relative",
                   }}>
                     {/* Play header */}
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px", borderBottom: "1px solid #eee", paddingBottom: "8px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px", borderBottom: "2px solid #999", paddingBottom: "8px" }}>
                       <div>
-                        <div style={{ fontSize: "10px", color: "#aaa", textTransform: "uppercase", letterSpacing: "1px" }}>
+                        <div style={{ fontSize: "10px", color: "#555", textTransform: "uppercase", letterSpacing: "1px" }}>
                           Play {String(index + 1).padStart(2, "0")}
                         </div>
                         <h3 style={{ fontSize: "18px", fontWeight: "800", margin: "2px 0" }}>{play.title}</h3>
                         {tags.length > 0 && (
                           <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", marginTop: "4px" }}>
                             {tags.map((tag) => (
-                              <span key={tag} style={{ fontSize: "9px", padding: "1px 6px", borderRadius: "4px", border: "1px solid #ccc", backgroundColor: "#f5f5f5" }}>
+                              <span key={tag} style={{ fontSize: "9px", padding: "1px 6px", borderRadius: "4px", border: "1px solid #888", backgroundColor: "#f0f0f0" }}>
                                 {tag}
                               </span>
                             ))}
@@ -393,10 +386,10 @@ export default function PlaybookDetail() {
                         )}
                       </div>
                       <div style={{ display: "flex", gap: "4px" }}>
-                        <span style={{ fontSize: "9px", padding: "2px 6px", borderRadius: "4px", backgroundColor: "#e5e7eb", fontWeight: "600" }}>
+                        <span style={{ fontSize: "9px", padding: "2px 6px", borderRadius: "4px", backgroundColor: "#d0d0d0", fontWeight: "600" }}>
                           {play.format}
                         </span>
-                        <span style={{ fontSize: "9px", padding: "2px 6px", borderRadius: "4px", backgroundColor: play.mode === "offense" ? "#dbeafe" : "#fee2e2", color: play.mode === "offense" ? "#1d4ed8" : "#b91c1c", fontWeight: "600" }}>
+                        <span style={{ fontSize: "9px", padding: "2px 6px", borderRadius: "4px", backgroundColor: play.mode === "offense" ? "#bdd8fc" : "#fcc", color: play.mode === "offense" ? "#1d4ed8" : "#b91c1c", fontWeight: "600" }}>
                           {play.mode}
                         </span>
                       </div>
@@ -404,27 +397,27 @@ export default function PlaybookDetail() {
 
                     {/* Diagram + notes */}
                     <div style={{ display: "flex", flexDirection: twoPerPage ? "row" : "column", gap: twoPerPage ? "16px" : "12px" }}>
-                      <div style={{ width: twoPerPage ? "100px" : "100%", height: twoPerPage ? "100px" : "680px", flexShrink: 0, border: "1px solid #ccc", overflow: "hidden", borderRadius: "6px", overflow: "hidden", border: "1px solid #ddd" }}>
+                      <div style={{ width: twoPerPage ? "100px" : "100%", height: twoPerPage ? "100px" : "680px", flexShrink: 0, border: "2px solid #555", overflow: "hidden", borderRadius: "6px" }}>
                         <MiniField play={play} />
                       </div>
                       <div style={{ flex: 1 }}>
                         {play.notes ? (
                           <>
-                            <div style={{ fontSize: "9px", textTransform: "uppercase", letterSpacing: "1px", color: "#999", marginBottom: "4px" }}>Coaching Notes</div>
-                            <p style={{ fontSize: "11px", lineHeight: "1.5", color: "#333", whiteSpace: "pre-wrap" }}>{play.notes}</p>
+                            <div style={{ fontSize: "9px", textTransform: "uppercase", letterSpacing: "1px", color: "#666", marginBottom: "4px" }}>Coaching Notes</div>
+                            <p style={{ fontSize: "11px", lineHeight: "1.5", color: "#222", whiteSpace: "pre-wrap" }}>{play.notes}</p>
                           </>
                         ) : (
-                          <p style={{ fontSize: "11px", color: "#bbb", fontStyle: "italic" }}>No coaching notes.</p>
+                          <p style={{ fontSize: "11px", color: "#999", fontStyle: "italic" }}>No coaching notes.</p>
                         )}
-                        <div style={{ marginTop: "8px", fontSize: "10px", color: "#bbb" }}>
-                          {play.isManBeater && "Man-Beater  "}
+                        <div style={{ marginTop: "8px", fontSize: "10px", color: "#888" }}>
+                          {play.isManBeater && "Man-Beater "}
                           {play.isZoneBeater && "Zone-Beater"}
                         </div>
                       </div>
                     </div>
 
                     {/* Page number footer */}
-                    <div style={{ position: "absolute", bottom: "6px", right: "12px", fontSize: "9px", color: "#ccc" }}>
+                    <div style={{ position: "absolute", bottom: "6px", right: "12px", fontSize: "9px", color: "#999" }}>
                       {settings.teamName} · {today} · p.{index + 2}
                     </div>
                   </div>
@@ -434,7 +427,6 @@ export default function PlaybookDetail() {
           </>
         )}
       </div>
-
       <AddPlayDialog open={showAdd} onOpenChange={setShowAdd} playbookId={id} existingPlayIds={existingIds} />
     </AppLayout>
   );
