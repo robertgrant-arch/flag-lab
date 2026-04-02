@@ -141,10 +141,12 @@ export default function Designer() {
         setLocation(`/designer/${newPlay.id}`);
       } else {
         const res = await fetch(`/api/plays/${play.id}`, {
-          method: "PATCH", headers: { "Content-Type": "application/json" },
+          method: "PUT", headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
         if (!res.ok) throw new Error("Save failed");
+              const savedPlay = await res.json();
+      init({ ...savedPlay, players: savedPlay.players ?? [], routes: savedPlay.routes ?? [], tags: savedPlay.tags ?? [] });
         if (annotations.length > 0) {
           localStorage.setItem(`flaglab_annotations_${play.id}`, JSON.stringify(annotations));
         } else {
