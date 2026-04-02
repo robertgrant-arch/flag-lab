@@ -1,130 +1,390 @@
+import { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useParams, Link } from "wouter";
 import { useGetPlay } from "@workspace/api-client-react";
 import { getGetPlayQueryKey } from "@workspace/api-client-react";
-import { Loader2, ArrowLeft, Edit2, Play as PlayIcon } from "lucide-react";
+import {
+  Loader2,
+  ArrowLeft,
+  Edit2,
+  Play as PlayIcon,
+  Square,
+  AlertCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MiniField } from "@/components/MiniField";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { DesignerCanvas } from "@/components/designer/DesignerCanvas";
+import type { PlayerToken, RouteSegment } from "@/hooks/use-designer-state";
+
+// ─── Role colour map (matches Designer) ────────────────────────────────────
+const ROLE_COLORS: Record<string, string> = {
+  QB: "#ef4444",
+  C: "#f97316",
+  WR1: "#3b82f6",
+  WR2: "#3b82f6",
+  WR3: "#60a5fa",
+  WR4: "#93c5fd",
+  RB: "#22c55e",
+  FB: "#16a34a",
+  TE: "#a855f7",
+  CB1: "#ef4444",
+  CB2: "#f87171",
+  S: "#dc2626",
+  LB: "#f59e0b",
+  Rusher: "#b91c1c",
+  DB3: "#fca5a5",
+};
+
+const getRoleColor = (role: string): string =>
+  ROLE_COLORS[role] ?? "#6b7280";
+
+// ─── No-op handlers for read-only canvas ───────────────────────────────────
+const noop = () => {};
+const noopStr = (_: string) => {};
+const noopPlayer = (_: PlayerToken) => {};
+const noopRoute = (_: RouteSegment) => {};
+const noopDrop = (
+  _role: string,
+  _team: "offense" | "defense",
+  _x: number,
+  _y: number
+) => {};
+
+// ─── Sub-components ─────────────────────────────────────────────────────────
+
+interface PlayerRowProps {
+  role: string;
+  color: string;
+}
+
+function PlayerRow({ role, color }: PlayerRowProps) {
+  return (
+    <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-md hover:bg-white/5 transition-colors">
+      <span
+        className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-sm"
+        style={{ backgroundColor: color }}
+      >
+        {role.slice(0, 2)}
+      </span>
+      <span className="text-sm text-foreground/80 font-medium">{role}</span>
+    </div>
+  );
+}
+
+interface SectionHeaderProps {
+  label: string;
+}
+
+function SectionHeader({ label }: SectionHeaderProps) {
+  return (
+    <p className="px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60 select-none">
+      {label}
+    </p>
+  );
+}
+
+interface DetailRowProps {
+  label: string;
+  value: React.ReactNode;
+}
+
+function DetailRow({ label, value }: DetailRowProps) {
+  return (
+    <div className="flex flex-col gap-0.5 px-3 py-2">
+      <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+        {label}
+      </span>
+      <div className="text-sm text-foreground font-medium">{value}</div>
+    </div>
+  );
+}
+
+// ─── Main component ──────────────────────────────────────────────────────────
 
 export default function LibraryDetail() {
   const params = useParams();
   const id = params.id as string;
 
   const { data: play, isLoading } = useGetPlay(id, {
-    query: { enabled: !!id, queryKey: getGetPlayQueryKey(id) }
+    query: { enabled: !!id, queryKey: getGetPlayQueryKey(id) },
   });
 
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
+  const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
+
+  // ── Loading state ──────────────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <AppLayout headerTitle="Loading Play...">
-        <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <AppLayout>
+        <div className="flex h-[calc(100vh-48px)] items-center justify-center">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
         </div>
       </AppLayout>
     );
   }
 
+  // ── Not found state ────────────────────────────────────────────────────────
   if (!play) {
     return (
-      <AppLayout headerTitle="Play Not Found">
-        <div className="flex-1 flex flex-col items-center justify-center">
-          <p className="text-lg text-muted-foreground mb-4">This play doesn't exist or has been removed.</p>
-          <Button asChild>
-            <Link href="/library">Back to Library</Link>
-          </Button>
+      <AppLayout>
+        <div className="flex h-[calc(100vh-48px)] flex-col items-center justify-center gap-4">
+          <AlertCircle className="w-8 h-8 text-muted-foreground" />
+          <p className="text-muted-foreground text-sm">Play not found.</p>
+          <Link href="/library">
+            <Button variant="ghost" size="sm">
+              <ArrowLeft className="w-4 h-4 mr-1.5" />
+              Back to Library
+            </Button>
+          </Link>
         </div>
       </AppLayout>
     );
   }
 
+  // ── Derived data ───────────────────────────────────────────────────────────
+  const players: PlayerToken[] = play.players ?? [];
+  const routes: RouteSegment[] = play.routes ?? [];
+
+  const offensePlayers = players.filter((p) => p.team === "offense");
+  const defensePlayers = players.filter((p) => p.team === "defense");
+
+  const tags: string[] = play.tags ?? [];
+  const coachingNotes: string = play.coachingNotes ?? play.notes ?? "";
+
+  // ── 3-panel layout ─────────────────────────────────────────────────────────
   return (
-    <AppLayout 
-      headerTitle={play.title}
-      headerActions={
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="gap-2">
-            <PlayIcon className="h-4 w-4" />
-            Animate
-          </Button>
-          <Button size="sm" className="gap-2" asChild>
-            <Link href={`/designer/${play.id}`}>
-              <Edit2 className="h-4 w-4" />
-              Edit
-            </Link>
-          </Button>
-        </div>
-      }
-    >
-      <div className="p-6 max-w-6xl mx-auto w-full space-y-6">
-        <Button variant="ghost" size="sm" className="w-fit gap-2 -ml-2 text-muted-foreground" asChild>
+    <AppLayout>
+      {/* ── Top header bar ─────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between px-4 h-12 border-b border-border/60 bg-background flex-shrink-0">
+        {/* Left: back link + title */}
+        <div className="flex items-center gap-3 min-w-0">
           <Link href="/library">
-            <ArrowLeft className="h-4 w-4" />
-            Back to Library
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 text-muted-foreground hover:text-foreground px-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Library
+            </Button>
           </Link>
-        </Button>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="col-span-1 lg:col-span-2 overflow-hidden border-2">
-            <div className="aspect-[4/3] bg-muted relative">
-              <MiniField players={play.players} routes={play.routes} format={play.format} />
-            </div>
-          </Card>
-
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Play Details</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground mb-1">Format & Mode</div>
-                  <div className="flex gap-2">
-                    <Badge variant="secondary">{play.format}</Badge>
-                    <Badge variant={play.mode === 'offense' ? "default" : "destructive"}>{play.mode}</Badge>
-                  </div>
-                </div>
-                
-                {play.primaryConcept && (
-                  <div>
-                    <div className="text-sm font-medium text-muted-foreground mb-1">Primary Concept</div>
-                    <div>{play.primaryConcept}</div>
-                  </div>
-                )}
-
-                {play.tags && play.tags.length > 0 && (
-                  <div>
-                    <div className="text-sm font-medium text-muted-foreground mb-2">Tags</div>
-                    <div className="flex flex-wrap gap-1">
-                      {play.tags.map(tag => (
-                        <Badge key={tag} variant="outline" className="bg-background">{tag}</Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                <div className="pt-2">
-                  <div className="flex gap-2">
-                    {play.isManBeater && <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20">Man-Beater</Badge>}
-                    {play.isZoneBeater && <Badge variant="outline" className="bg-purple-500/10 text-purple-500 border-purple-500/20">Zone-Beater</Badge>}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {play.notes && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Coaching Notes</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{play.notes}</p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+          <Separator orientation="vertical" className="h-4" />
+          <span className="text-sm font-semibold truncate max-w-[260px]">
+            {play.title ?? "Untitled Play"}
+          </span>
+          {play.format && (
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">
+              {play.format}
+            </Badge>
+          )}
         </div>
+
+        {/* Right: animate + edit */}
+        <div className="flex items-center gap-2">
+          <Button
+            variant={isAnimating ? "default" : "outline"}
+            size="sm"
+            className="gap-1.5 text-xs"
+            onClick={() => setIsAnimating((prev) => !prev)}
+          >
+            {isAnimating ? (
+              <>
+                <Square className="w-3.5 h-3.5" />
+                Stop
+              </>
+            ) : (
+              <>
+                <PlayIcon className="w-3.5 h-3.5" />
+                Animate
+              </>
+            )}
+          </Button>
+          <Link href={`/designer/${id}`}>
+            <Button size="sm" className="gap-1.5 text-xs">
+              <Edit2 className="w-3.5 h-3.5" />
+              Edit
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      {/* ── 3-panel body ───────────────────────────────────────────────────── */}
+      <div className="flex h-[calc(100vh-96px)] overflow-hidden bg-background">
+        {/* ── LEFT SIDEBAR: Player roster ──────────────────────────────────── */}
+        <aside className="w-[200px] flex-shrink-0 border-r border-border/60 flex flex-col">
+          <ScrollArea className="flex-1">
+            <div className="py-2">
+              {offensePlayers.length > 0 && (
+                <>
+                  <SectionHeader label="Offense" />
+                  {offensePlayers.map((p) => (
+                    <PlayerRow
+                      key={p.id}
+                      role={p.role}
+                      color={getRoleColor(p.role)}
+                    />
+                  ))}
+                </>
+              )}
+
+              {defensePlayers.length > 0 && (
+                <>
+                  {offensePlayers.length > 0 && (
+                    <Separator className="my-2 mx-3" />
+                  )}
+                  <SectionHeader label="Defense" />
+                  {defensePlayers.map((p) => (
+                    <PlayerRow
+                      key={p.id}
+                      role={p.role}
+                      color={getRoleColor(p.role)}
+                    />
+                  ))}
+                </>
+              )}
+
+              {players.length === 0 && (
+                <p className="px-3 py-4 text-xs text-muted-foreground/50 text-center">
+                  No players on this play.
+                </p>
+              )}
+            </div>
+          </ScrollArea>
+        </aside>
+
+        {/* ── CENTER: Canvas ────────────────────────────────────────────────── */}
+        <main className="flex-1 overflow-hidden flex items-start justify-center bg-muted/20">
+          <DesignerCanvas
+            players={players}
+            routes={routes}
+            format={play.format ?? "5v5"}
+            // Read-only — all mutation handlers are no-ops
+            onUpdatePlayer={noopPlayer}
+            onUpdatePlayerPosition={noopPlayer}
+            onRemovePlayer={noopStr}
+            onAddRoute={noopRoute}
+            onUpdateRoute={noopRoute}
+            onRemoveRoute={noopStr}
+            onDropPlayer={noopDrop}
+            selectedPlayerId={selectedPlayerId}
+            setSelectedPlayerId={setSelectedPlayerId}
+            selectedRouteId={selectedRouteId}
+            setSelectedRouteId={setSelectedRouteId}
+            isAnimating={isAnimating}
+          />
+        </main>
+
+        {/* ── RIGHT SIDEBAR: Play details ───────────────────────────────────── */}
+        <aside className="w-[250px] flex-shrink-0 border-l border-border/60 flex flex-col">
+          <ScrollArea className="flex-1">
+            <div className="py-2">
+              <SectionHeader label="Play Details" />
+
+              <DetailRow label="Title" value={play.title ?? "—"} />
+
+              <DetailRow
+                label="Format"
+                value={
+                  play.format ? (
+                    <Badge variant="outline" className="text-xs font-medium">
+                      {play.format}
+                    </Badge>
+                  ) : (
+                    "—"
+                  )
+                }
+              />
+
+              {play.side && (
+                <DetailRow
+                  label="Side"
+                  value={
+                    <Badge variant="secondary" className="text-xs capitalize">
+                      {play.side}
+                    </Badge>
+                  }
+                />
+              )}
+
+              {/* Man / Zone beater toggles (read-only display) */}
+              <div className="px-3 py-2 flex flex-col gap-2">
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+                  Coverage Beaters
+                </span>
+                <div className="flex gap-2">
+                  <div
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium transition-colors ${
+                      play.manBeater
+                        ? "border-blue-500/60 bg-blue-500/10 text-blue-400"
+                        : "border-border/40 text-muted-foreground/40"
+                    }`}
+                  >
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${
+                        play.manBeater ? "bg-blue-400" : "bg-muted-foreground/30"
+                      }`}
+                    />
+                    Man
+                  </div>
+                  <div
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium transition-colors ${
+                      play.zoneBeater
+                        ? "border-amber-500/60 bg-amber-500/10 text-amber-400"
+                        : "border-border/40 text-muted-foreground/40"
+                    }`}
+                  >
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${
+                        play.zoneBeater
+                          ? "bg-amber-400"
+                          : "bg-muted-foreground/30"
+                      }`}
+                    />
+                    Zone
+                  </div>
+                </div>
+              </div>
+
+              {/* Tags */}
+              {tags.length > 0 && (
+                <div className="px-3 py-2 flex flex-col gap-1.5">
+                  <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+                    Tags
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {tags.map((tag) => (
+                      <Badge
+                        key={tag}
+                        variant="secondary"
+                        className="text-[10px] px-1.5 py-0"
+                      >
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Coaching Notes */}
+              {coachingNotes && (
+                <>
+                  <Separator className="my-2 mx-3" />
+                  <div className="px-3 py-2 flex flex-col gap-1.5">
+                    <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+                      Coaching Notes
+                    </span>
+                    <p className="text-xs text-foreground/70 leading-relaxed whitespace-pre-wrap">
+                      {coachingNotes}
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+          </ScrollArea>
+        </aside>
       </div>
     </AppLayout>
   );
