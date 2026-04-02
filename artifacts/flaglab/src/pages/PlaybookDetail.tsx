@@ -403,8 +403,8 @@ export default function PlaybookDetail() {
                     </div>
 
                     {/* Diagram + notes */}
-                    <div style={{ display: "flex", gap: "16px" }}>
-                      <div style={{ width: twoPerPage ? "100px" : "140px", height: twoPerPage ? "100px" : "140px", flexShrink: 0, borderRadius: "6px", overflow: "hidden", border: "1px solid #ddd" }}>
+                    <div style={{ display: "flex", flexDirection: twoPerPage ? "row" : "column", gap: twoPerPage ? "16px" : "12px" }}>
+                      <div style={{ width: twoPerPage ? "100px" : "100%", height: twoPerPage ? "100px" : "680px", flexShrink: 0, border: "1px solid #ccc", overflow: "hidden", borderRadius: "6px", overflow: "hidden", border: "1px solid #ddd" }}>
                         <MiniField play={play} />
                       </div>
                       <div style={{ flex: 1 }}>
